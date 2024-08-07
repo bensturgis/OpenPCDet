@@ -4,7 +4,7 @@ import torch
 
 box_colormap = [
     [1, 1, 1],
-    [0, 1, 0],
+    [1, 0, 0],
     [0, 1, 1],
     [1, 1, 0],
 ]
@@ -79,9 +79,13 @@ def visualize_pts(pts, fig=None, bgcolor=(0, 0, 0), fgcolor=(1.0, 1.0, 1.0),
     if show_intensity:
         G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], pts[:, 3], mode='point',
                           colormap='gnuplot', scale_factor=1, figure=fig)
+        # G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], pts[:, 3], mode='cube',
+        #                   colormap='gnuplot', scale_factor=0.02, figure=fig)
     else:
         G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], mode='point',
                           colormap='gnuplot', scale_factor=1, figure=fig)
+        # G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], mode='cube',
+                        #   colormap='gnuplot', scale_factor=0.02, figure=fig)
     if draw_origin:
         mlab.points3d(0, 0, 0, color=(1, 1, 1), mode='cube', scale_factor=0.2)
         mlab.plot3d([0, 3], [0, 0], [0, 0], color=(0, 0, 1), tube_radius=0.1)
@@ -139,7 +143,10 @@ def draw_multi_grid_range(fig, grid_size=20, bv_range=(-60, -60, 60, 60)):
     return fig
 
 
-def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labels=None):
+def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labels=None, show=True):
+    if not show:
+        mlab.options.offscreen = True
+    
     if not isinstance(points, np.ndarray):
         points = points.cpu().numpy()
     if ref_boxes is not None and not isinstance(ref_boxes, np.ndarray):
@@ -151,22 +158,23 @@ def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labe
     if ref_labels is not None and not isinstance(ref_labels, np.ndarray):
         ref_labels = ref_labels.cpu().numpy()
 
-    fig = visualize_pts(points)
+    fig = visualize_pts(points, size=(3840, 2160))
     fig = draw_multi_grid_range(fig, bv_range=(0, -40, 80, 40))
     if gt_boxes is not None:
         corners3d = boxes_to_corners_3d(gt_boxes)
-        fig = draw_corners3d(corners3d, fig=fig, color=(0, 0, 1), max_num=100)
+        fig = draw_corners3d(corners3d, fig=fig, color=(0, 1, 0), max_num=100)
 
     if ref_boxes is not None and len(ref_boxes) > 0:
         ref_corners3d = boxes_to_corners_3d(ref_boxes)
         if ref_labels is None:
-            fig = draw_corners3d(ref_corners3d, fig=fig, color=(0, 1, 0), cls=ref_scores, max_num=100)
+            fig = draw_corners3d(ref_corners3d, fig=fig, color=(1, 0, 0), cls=ref_scores, max_num=100)
         else:
             for k in range(ref_labels.min(), ref_labels.max() + 1):
                 cur_color = tuple(box_colormap[k % len(box_colormap)])
                 mask = (ref_labels == k)
                 fig = draw_corners3d(ref_corners3d[mask], fig=fig, color=cur_color, cls=ref_scores[mask], max_num=100)
-    mlab.view(azimuth=-179, elevation=54.0, distance=104.0, roll=90.0)
+    # mlab.view(azimuth=-180, elevation=180.0, distance=110.0, roll=90.0) # top view
+    mlab.view(azimuth=-90, elevation=50.0, distance=55.0, roll=0.0) # side view
     return fig
 
 
