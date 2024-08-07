@@ -119,23 +119,22 @@ class VisDataset(DatasetTemplate):
 
 def parse_config():
     parser = argparse.ArgumentParser(description='''Python script to perform inference on
-                                     specified data and visualize the predictions.''')
+                                     specified data and visualize the detections.''')
     parser.add_argument('--cfg_file', type=str, default=None,
                         help='Specify path to the model config for inference.')
     parser.add_argument('--pcd_path', type=str, default=None,
                         help='''Specify path to a single point cloud or a directory
                         containing point clouds. Extension of point clouds is
-                        given by 'ext' argument''')
-    parser.add_argument('--model', type=str, default=None,
-                        help='Specify path to the model you want to use for inference.')
+                        given by 'ext' argument.''')
+    parser.add_argument('--weights', type=str, default=None,
+                        help='Specify path to the weights you want to use for inference.')
     parser.add_argument('--labels', type=str, default=None,
                         help='''Path to the directory in which the ground truth labels are stored.''')
     parser.add_argument('--save_dir', type=str, default=None,
                         help='''Path to directory in which the visualizations will be saved.
                         If None visualizations will not be saved.''')
     parser.add_argument('--show', action='store_true',
-                        help='''Specify whether the visualizations should be displayed (True)
-                        or just saved (False). Defaults to True.''')
+                        help='''Specify whether the visualizations should be displayed.''')
     parser.add_argument('--sample_list', type=str, default=None,
                         help='''Specify path to a text file containing the names of the samples
                         you want to inference on and visualize the predictions. For example, if you
@@ -177,7 +176,7 @@ def main():
     logger.info(f'Total number of samples: \t{len(vis_dataset)}')
 
     model = build_network(model_cfg=cfg.MODEL, num_class=len(cfg.CLASS_NAMES), dataset=vis_dataset)
-    model.load_params_from_file(filename=args.model, logger=logger, to_cpu=True)
+    model.load_params_from_file(filename=args.weights, logger=logger, to_cpu=True)
     model.cuda()
     model.eval()
 
