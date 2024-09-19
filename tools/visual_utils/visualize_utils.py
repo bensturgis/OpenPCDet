@@ -4,9 +4,8 @@ import torch
 
 box_colormap = [
     [1, 1, 1],
-    [1, 0, 0],
     [0, 1, 1],
-    [1, 1, 0],
+    [1, 1, 0]
 ]
 
 
@@ -70,22 +69,23 @@ def boxes_to_corners_3d(boxes3d):
 
 
 def visualize_pts(pts, fig=None, bgcolor=(0, 0, 0), fgcolor=(1.0, 1.0, 1.0),
-                  show_intensity=False, size=(600, 600), draw_origin=True):
+                  show_intensity=False, fig_size=(600, 600), pt_size=3, draw_origin=True):
     if not isinstance(pts, np.ndarray):
         pts = pts.cpu().numpy()
     if fig is None:
-        fig = mlab.figure(figure=None, bgcolor=bgcolor, fgcolor=fgcolor, engine=None, size=size)
+        fig = mlab.figure(figure=None, bgcolor=bgcolor, fgcolor=fgcolor, engine=None, size=fig_size)
 
     if show_intensity:
         G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], pts[:, 3], mode='point',
-                          colormap='gnuplot', scale_factor=1, figure=fig)
-        # G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], pts[:, 3], mode='cube',
-        #                   colormap='gnuplot', scale_factor=0.02, figure=fig)
+                          colormap='jet', figure=fig)
     else:
         G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], mode='point',
-                          colormap='gnuplot', scale_factor=1, figure=fig)
-        # G = mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], mode='cube',
-                        #   colormap='gnuplot', scale_factor=0.02, figure=fig)
+                          colormap='jet', figure=fig)
+        
+    G.actor.property.lighting = False
+    G.actor.property.render_points_as_spheres = True
+    G.actor.property.point_size = pt_size
+    
     if draw_origin:
         mlab.points3d(0, 0, 0, color=(1, 1, 1), mode='cube', scale_factor=0.2)
         mlab.plot3d([0, 3], [0, 0], [0, 0], color=(0, 0, 1), tube_radius=0.1)
@@ -117,7 +117,7 @@ def draw_sphere_pts(pts, color=(0, 1, 0), fig=None, bgcolor=(0, 0, 0), scale_fac
         G.module_manager.scalar_lut_manager.lut.table = pts_color
     else:
         mlab.points3d(pts[:, 0], pts[:, 1], pts[:, 2], mode='sphere', color=color,
-                      colormap='gnuplot', scale_factor=scale_factor, figure=fig)
+                      colormap='jet', scale_factor=scale_factor, figure=fig)
 
     mlab.points3d(0, 0, 0, color=(1, 1, 1), mode='cube', scale_factor=0.2)
     mlab.plot3d([0, 3], [0, 0], [0, 0], color=(0, 0, 1), line_width=3, tube_radius=None, figure=fig)
@@ -158,7 +158,9 @@ def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labe
     if ref_labels is not None and not isinstance(ref_labels, np.ndarray):
         ref_labels = ref_labels.cpu().numpy()
 
-    fig = visualize_pts(points, size=(3840, 2160))
+    if points.shape[1] == 4:
+        show_intensity=True
+    fig = visualize_pts(points, fig_size=(3840, 2160), show_intensity=show_intensity)
     fig = draw_multi_grid_range(fig, bv_range=(0, -40, 80, 40))
     if gt_boxes is not None:
         corners3d = boxes_to_corners_3d(gt_boxes)
@@ -178,7 +180,7 @@ def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labe
     return fig
 
 
-def draw_corners3d(corners3d, fig, color=(1, 1, 1), line_width=2, cls=None, tag='', max_num=500, tube_radius=None):
+def draw_corners3d(corners3d, fig, color=(1, 1, 1), line_width=4, cls=None, tag='', max_num=500, tube_radius=None):
     """
     :param corners3d: (N, 8, 3)
     :param fig:
